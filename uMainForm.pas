@@ -9,7 +9,7 @@ uses
   regularexpressions, generics.collections, Pkg.Json.Mapper, NetEncoding,
   FMX.Menus, FMX.Controls.Presentation, FMX.Edit, FMX.ConstrainedForm, REST.Client,
   uUpdate, System.Threading, uGitHub, FMX.Objects, uUpdateForm, SyncObjs,
-  FMX.ScrollBox;
+  FMX.ScrollBox, FMX.Memo.Types;
 
 const JsonValidatorUrl = 'http://jsonlint.com';
 
@@ -138,6 +138,10 @@ end;
 
 procedure TMainForm.PreviewUnitClick(Sender: TObject);
 begin
+  jm.UsesAppendix := 'UnitRESTAPICarrier';
+  jm.BaseClassAppendix := 'TRESTJSONStruct';
+  jm.ImplInterfaceAppendix := 'IRESTAPICarrier';
+
   if tv.Count = 0 then
     btnVisualizeClick(self);
 

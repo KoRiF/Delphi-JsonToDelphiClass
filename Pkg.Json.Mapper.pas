@@ -68,6 +68,7 @@ type
     FMapper: TPkgJsonMapper;
     FPureClassName: string;
     FArrayProperty: string;
+    FClassDeclarationAppendix: string;
     procedure SortFields;
     procedure SetName(const Value: string);
     procedure SetPureClassName(const Value: string);
@@ -89,6 +90,11 @@ type
       FClasses: TList<TStubClass>;
       FRootClass: TStubClass;
       FUnitName: string;
+      FUsesAppendix: string;
+      FBaseClassAppendix: string;
+      FInterfaceAppendix: string;
+      function GetUsesAppendix(): string;
+      function GetDeclarationAppendix(): string;
       procedure SetUnitName(const Value: string);
     protected
       function  GetJsonType(AJsonValue: TJsonValue): TJsonType;
@@ -110,6 +116,10 @@ type
       //  Visualizes stub class structure in a treeview
       procedure   Visualize(ATreeView: TTreeView; AItemStyleLookup: string);
       property    DestinationUnitName: string read FUnitName write SetUnitName;
+      property    UsesAppendix: string read GetUsesAppendix write FUsesAppendix;
+      property    BaseClassAppendix: string write FBaseClassAppendix;
+      property    ImplInterfaceAppendix: string write FInterfaceAppendix;
+      property    StructClassDeclarationAppendix: string read GetDeclarationAppendix;
   end;
 
 procedure PrettyPrintJSON(JSONValue: TJSONValue; OutputStrings: TStrings; indent: integer = 0);
@@ -267,7 +277,7 @@ begin
     LList.Add('');
     LList.Add('interface');
     LList.Add('');
-    LList.Add('uses Generics.Collections, Rest.Json;');
+    LList.Add('uses Generics.Collections, Rest.Json' + UsesAppendix + ';');
     LList.Add('');
     LList.Add('type');
 
@@ -314,6 +324,24 @@ begin
     FormatFields(ATreeView);
     ATreeView.EndUpdate;
     ATreeView.ExpandAll;
+  end;
+end;
+
+function TPkgJsonMapper.GetDeclarationAppendix: string;
+begin
+  RESULT := '';
+  var inheritanceList := '';
+
+  if FInterfaceAppendix <> '' then
+  begin
+    if FBaseClassAppendix = '' then
+      FBaseClassAppendix := 'TInterfacedObject';
+    inheritanceList := ', '+FInterfaceAppendix;
+  end;
+  if FBaseClassAppendix <> '' then
+  begin
+    inheritanceList := FBaseClassAppendix + inheritanceList;
+    RESULT := RESULT + ' ('+inheritanceList+') ';
   end;
 end;
 
@@ -451,6 +479,13 @@ begin
             end
             else
               result := jtUnknown;
+end;
+
+function TPkgJsonMapper.GetUsesAppendix: string;
+begin
+  RESULT := '';
+  if FUsesAppendix <> '' then
+    RESULT := ', ' + FUsesAppendix;
 end;
 
 procedure TPkgJsonMapper.InternalFormatTreeViewFields(AItem: TTreeViewItem);
@@ -601,7 +636,8 @@ begin
     end;  
 
   FComparer := TComparer<TStubField>.Construct(FComparison);
-  
+
+  FClassDeclarationAppendix := AMapper.StructClassDeclarationAppendix;
 end;
 
 destructor TStubClass.Destroy;
@@ -739,7 +775,7 @@ begin
   LLines := TStringList.Create;
   try
     LLines.Add('');
-    LLines.Add(FName + ' = class');
+    LLines.Add(FName + ' = class' + FClassDeclarationAppendix);
     LLines.Add('private');
 
     for LItem in FItems do
